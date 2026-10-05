@@ -35,6 +35,16 @@ void main() {
       expect(value.totalDistance, 5000);
     });
 
+    test('parses whether a workout was indoors', () {
+      WorkoutHealthValue parse(Map<String, dynamic> dataPoint) =>
+          HealthDataPoint.fromHealthDataPoint(HealthDataType.WORKOUT, dataPoint, HealthDataUnit.NO_UNIT.name).value
+              as WorkoutHealthValue;
+
+      expect(parse({...HealthFixtures.workoutPoint(), 'isIndoor': true}).isIndoor, isTrue);
+      expect(parse({...HealthFixtures.workoutPoint(), 'isIndoor': false}).isIndoor, isFalse);
+      expect(parse(HealthFixtures.workoutPoint()).isIndoor, isNull);
+    });
+
     test('parses workout route health data points', () {
       final point = HealthDataPoint.fromHealthDataPoint(
         HealthDataType.WORKOUT_ROUTE,

@@ -136,6 +136,10 @@ class WorkoutHealthValue extends HealthValue {
   /// Might not be available for all workouts.
   HealthDataUnit? totalStepsUnit;
 
+  /// Whether the workout was performed indoors (iOS only).
+  /// Might not be available for all workouts.
+  bool? isIndoor;
+
   WorkoutHealthValue({
     required this.workoutActivityType,
     this.totalEnergyBurned,
@@ -144,6 +148,7 @@ class WorkoutHealthValue extends HealthValue {
     this.totalDistanceUnit,
     this.totalSteps,
     this.totalStepsUnit,
+    this.isIndoor,
   });
 
   /// Create a [WorkoutHealthValue] based on a health data point from native data format.
@@ -164,6 +169,7 @@ class WorkoutHealthValue extends HealthValue {
     totalStepsUnit: dataPoint['totalStepsUnit'] != null
         ? HealthDataUnit.values.firstWhere((element) => element.name == dataPoint['totalStepsUnit'])
         : null,
+    isIndoor: dataPoint['isIndoor'] as bool?,
   );
 
   @override
@@ -181,7 +187,8 @@ class WorkoutHealthValue extends HealthValue {
            totalDistance: $totalDistance,
            totalDistanceUnit: ${totalDistanceUnit?.name}
            totalSteps: $totalSteps,
-           totalStepsUnit: ${totalStepsUnit?.name}""";
+           totalStepsUnit: ${totalStepsUnit?.name},
+           isIndoor: $isIndoor""";
 
   @override
   bool operator ==(Object other) =>
@@ -192,7 +199,8 @@ class WorkoutHealthValue extends HealthValue {
       totalDistance == other.totalDistance &&
       totalDistanceUnit == other.totalDistanceUnit &&
       totalSteps == other.totalSteps &&
-      totalStepsUnit == other.totalStepsUnit;
+      totalStepsUnit == other.totalStepsUnit &&
+      isIndoor == other.isIndoor;
 
   @override
   int get hashCode => Object.hash(
@@ -203,6 +211,7 @@ class WorkoutHealthValue extends HealthValue {
     totalDistanceUnit,
     totalSteps,
     totalStepsUnit,
+    isIndoor,
   );
 }
 
