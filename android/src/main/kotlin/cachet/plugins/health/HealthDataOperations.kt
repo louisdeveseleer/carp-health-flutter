@@ -11,6 +11,7 @@ import androidx.health.connect.client.time.TimeRangeFilter
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel.Result
 import java.time.Instant
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
@@ -37,6 +38,24 @@ class HealthDataOperations(
     }
 
     /**
+     * Launches [block] and reports a failure to Flutter as a platform error. Health Connect calls
+     * throw when the provider cannot be bound, and an uncaught exception in the coroutine would
+     * crash the app.
+     */
+    private fun launchReporting(result: Result, method: String, block: suspend () -> Unit) {
+        scope.launch {
+            try {
+                block()
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Log.e("FLUTTER_HEALTH::ERROR", "$method failed: ${e.message}")
+                result.error("HEALTH_CONNECT_ERROR", e.message, null)
+            }
+        }
+    }
+
+    /**
      * Checks if the application has been granted the requested health data permissions. Verifies
      * permission status without triggering permission request dialogs.
      *
@@ -54,7 +73,7 @@ class HealthDataOperations(
             return
         }
 
-        scope.launch {
+        launchReporting(result, "hasPermissions") {
             result.success(
                     healthConnectClient
                             .permissionController
@@ -90,8 +109,14 @@ class HealthDataOperations(
      */
     fun revokePermissions(call: MethodCall, result: Result) {
         scope.launch {
-            Log.i("FLUTTER_HEALTH", "Revoking all Health Connect permissions")
-            healthConnectClient.permissionController.revokeAllPermissions()
+            try {
+                Log.i("FLUTTER_HEALTH", "Revoking all Health Connect permissions")
+                healthConnectClient.permissionController.revokeAllPermissions()
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Log.e("FLUTTER_HEALTH::ERROR", "Error revoking permissions: ${e.message}")
+            }
         }
         result.success(true)
     }
@@ -104,7 +129,7 @@ class HealthDataOperations(
      * @param result Flutter result callback returning boolean availability status
      */
     fun isHealthDataHistoryAvailable(call: MethodCall, result: Result) {
-        scope.launch {
+        launchReporting(result, "isHealthDataHistoryAvailable") {
             result.success(
                     healthConnectClient.features.getFeatureStatus(
                             HealthConnectFeatures.FEATURE_READ_HEALTH_DATA_HISTORY
@@ -121,7 +146,7 @@ class HealthDataOperations(
      * @param result Flutter result callback returning boolean authorization status
      */
     fun isHealthDataHistoryAuthorized(call: MethodCall, result: Result) {
-        scope.launch {
+        launchReporting(result, "isHealthDataHistoryAuthorized") {
             result.success(
                     healthConnectClient
                             .permissionController
@@ -139,7 +164,7 @@ class HealthDataOperations(
      * @param result Flutter result callback returning boolean availability status
      */
     fun isHealthDataInBackgroundAvailable(call: MethodCall, result: Result) {
-        scope.launch {
+        launchReporting(result, "isHealthDataInBackgroundAvailable") {
             result.success(
                     healthConnectClient.features.getFeatureStatus(
                             HealthConnectFeatures.FEATURE_READ_HEALTH_DATA_IN_BACKGROUND
@@ -156,7 +181,7 @@ class HealthDataOperations(
      * @param result Flutter result callback returning boolean authorization status
      */
     fun isHealthDataInBackgroundAuthorized(call: MethodCall, result: Result) {
-        scope.launch {
+        launchReporting(result, "isHealthDataInBackgroundAuthorized") {
             result.success(
                     healthConnectClient
                             .permissionController
@@ -174,7 +199,7 @@ class HealthDataOperations(
      * @param result Flutter result callback returning boolean availability status
      */
     fun isSkinTemperatureAvailable(call: MethodCall, result: Result) {
-        scope.launch {
+        launchReporting(result, "isSkinTemperatureAvailable") {
             result.success(
                     healthConnectClient.features.getFeatureStatus(
                             HealthConnectFeatures.FEATURE_SKIN_TEMPERATURE
