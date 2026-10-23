@@ -1611,6 +1611,8 @@ class Health {
   ///  - [title] The title of the workout.
   ///    *ONLY FOR HEALTH CONNECT* Default value is the [activityType], e.g. "STRENGTH_TRAINING".
   ///  - [recordingMethod] The recording method of the data point, automatic by default (on iOS this can only be automatic or manual).
+  ///  - [isIndoor] Whether the workout was performed indoors, e.g. a treadmill run.
+  ///    *ONLY FOR IOS* Written as `HKMetadataKeyIndoorWorkout`; left out when null.
   Future<bool> writeWorkoutData({
     required HealthWorkoutActivityType activityType,
     required DateTime start,
@@ -1621,6 +1623,7 @@ class Health {
     HealthDataUnit totalDistanceUnit = HealthDataUnit.METER,
     String? title,
     RecordingMethod recordingMethod = RecordingMethod.automatic,
+    bool? isIndoor,
   }) async {
     await _checkIfHealthConnectAvailableOnAndroid();
     if (Platform.isIOS && [RecordingMethod.active, RecordingMethod.unknown].contains(recordingMethod)) {
@@ -1643,6 +1646,7 @@ class Health {
       'totalDistanceUnit': totalDistanceUnit.name,
       'title': title,
       'recordingMethod': recordingMethod.toInt(),
+      'isIndoor': isIndoor,
     };
     return await _channel.invokeMethod('writeWorkoutData', args) == true;
   }
@@ -1664,6 +1668,8 @@ class Health {
   ///  - [title] The title of the workout.
   ///    *ONLY FOR HEALTH CONNECT* Default value is the [activityType], e.g. "STRENGTH_TRAINING".
   ///  - [recordingMethod] The recording method of the data point, automatic by default (on iOS this can only be automatic or manual).
+  ///  - [isIndoor] Whether the workout was performed indoors, e.g. a treadmill run.
+  ///    *ONLY FOR IOS* Written as `HKMetadataKeyIndoorWorkout`; left out when null.
   Future<String?> writeWorkoutDataUUID({
     required HealthWorkoutActivityType activityType,
     required DateTime start,
@@ -1674,6 +1680,7 @@ class Health {
     HealthDataUnit totalDistanceUnit = HealthDataUnit.METER,
     String? title,
     RecordingMethod recordingMethod = RecordingMethod.automatic,
+    bool? isIndoor,
   }) async {
     await _checkIfHealthConnectAvailableOnAndroid();
     if (Platform.isIOS &&
@@ -1706,6 +1713,7 @@ class Health {
       'totalDistanceUnit': totalDistanceUnit.name,
       'title': title,
       'recordingMethod': recordingMethod.toInt(),
+      'isIndoor': isIndoor,
     };
 
     String uuid =

@@ -928,6 +928,11 @@ class HealthDataWriter {
             )
         }
 
+        var metadata: [String: Any]? = nil
+        if let isIndoor = (arguments["isIndoor"] as? Bool) {
+            metadata = [HKMetadataKeyIndoorWorkout: isIndoor]
+        }
+
         let dateFrom = HealthUtilities.dateFromMilliseconds(startTime.doubleValue)
         let dateTo = HealthUtilities.dateFromMilliseconds(endTime.doubleValue)
 
@@ -938,7 +943,7 @@ class HealthDataWriter {
             duration: dateTo.timeIntervalSince(dateFrom),
             totalEnergyBurned: totalEnergyBurned ?? nil,
             totalDistance: totalDistance ?? nil,
-            metadata: nil
+            metadata: metadata
         )
 
         healthStore.save(
@@ -982,6 +987,11 @@ class HealthDataWriter {
                 unit: unitDict[(arguments["totalDistanceUnit"] as! String)]!, doubleValue: td)
         }
 
+        var metadata: [String: Any]? = nil
+        if let isIndoor = (arguments["isIndoor"] as? Bool) {
+            metadata = [HKMetadataKeyIndoorWorkout: isIndoor]
+        }
+
         let dateFrom = HealthUtilities.dateFromMilliseconds(startTime.doubleValue)
         let dateTo = HealthUtilities.dateFromMilliseconds(endTime.doubleValue)
 
@@ -992,7 +1002,7 @@ class HealthDataWriter {
             duration: dateTo.timeIntervalSince(dateFrom),
             totalEnergyBurned: totalEnergyBurned ?? nil,
             totalDistance: totalDistance ?? nil,
-            metadata: nil
+            metadata: metadata
         )
 
         healthStore.save(

@@ -96,6 +96,40 @@ void main() {
     });
   });
 
+  group('writeWorkoutData', () {
+    test('forwards isIndoor', () async {
+      ctx.channel.when('writeWorkoutData', true);
+
+      final success = await ctx.health.writeWorkoutData(
+        activityType: HealthWorkoutActivityType.RUNNING,
+        start: HealthFixtures.start,
+        end: HealthFixtures.end,
+        isIndoor: true,
+      );
+
+      expect(success, isTrue);
+      final call = ctx.channel.lastCallFor('writeWorkoutData');
+      expect(call, isNotNull);
+      final args = Map<String, dynamic>.from(call!.arguments as Map);
+      expect(args['isIndoor'], isTrue);
+    });
+
+    test('leaves isIndoor out by default', () async {
+      ctx.channel.when('writeWorkoutDataUUID', 'workout-1');
+
+      await ctx.health.writeWorkoutDataUUID(
+        activityType: HealthWorkoutActivityType.RUNNING,
+        start: HealthFixtures.start,
+        end: HealthFixtures.end,
+      );
+
+      final call = ctx.channel.lastCallFor('writeWorkoutDataUUID');
+      expect(call, isNotNull);
+      final args = Map<String, dynamic>.from(call!.arguments as Map);
+      expect(args['isIndoor'], isNull);
+    });
+  });
+
   group('writeActivityIntensity', () {
     test(
       'throws on non-Android platforms',
