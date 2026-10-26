@@ -946,17 +946,11 @@ class HealthDataWriter {
             metadata: metadata
         )
 
-        healthStore.save(
-            workout,
-            withCompletion: { success, error in
-                if let err = error {
-                    print("Error Saving Workout. Sample: \(err.localizedDescription)")
-                }
-                DispatchQueue.main.async {
-                    result(success)
-                }
+        saveWorkout(workout) { success in
+            DispatchQueue.main.async {
+                result(success)
             }
-        )
+        }
     }
 
     /// Writes workout data and return UUID on success, otherwise an empty string
@@ -1005,25 +999,53 @@ class HealthDataWriter {
             metadata: metadata
         )
 
+        saveWorkout(workout) { success in
+            DispatchQueue.main.async {
+                if success {
+                    // Return the UUID of the saved object
+                    if let savedSample = workout as? HKWorkout {
+                        print("Saved: \(savedSample.uuid.uuidString)")
+                        result(savedSample.uuid.uuidString) // Return UUID as String
+                    } else {
+                        result("")
+                    }
+                }
+
+                result("")
+            }
+        }
+    }
+
+    /// Saves the workout, then its energy as an active energy sample associated with it: the
+    /// Activity rings only count a workout's energy through associated samples, not through
+    /// `HKWorkout.totalEnergyBurned`. The workout counts as saved even if the sample isn't.
+    private func saveWorkout(_ workout: HKWorkout, completion: @escaping (Bool) -> Void) {
         healthStore.save(
             workout,
-            withCompletion: { (success, error) in
+            withCompletion: { success, error in
                 if let err = error {
                     print("Error Saving Workout. Sample: \(err.localizedDescription)")
                 }
-                DispatchQueue.main.async {
-                    if success {
-                        // Return the UUID of the saved object
-                        if let savedSample = workout as? HKWorkout {
-                            print("Saved: \(savedSample.uuid.uuidString)")
-                            result(savedSample.uuid.uuidString) // Return UUID as String
-                        } else {
-                            result("")
-                        }
-                    }
-
-                    result("")
+                guard success,
+                      let energy = workout.totalEnergyBurned,
+                      let type = HKQuantityType.quantityType(forIdentifier: .activeEnergyBurned)
+                else {
+                    completion(success)
+                    return
                 }
-            })
+                let sample = HKQuantitySample(
+                    type: type,
+                    quantity: energy,
+                    start: workout.startDate,
+                    end: workout.endDate
+                )
+                self.healthStore.add([sample], to: workout) { _, error in
+                    if let err = error {
+                        print("Error Saving Workout Energy. Sample: \(err.localizedDescription)")
+                    }
+                    completion(true)
+                }
+            }
+        )
     }
 }
