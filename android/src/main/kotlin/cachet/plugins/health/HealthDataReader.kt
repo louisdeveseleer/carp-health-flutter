@@ -619,8 +619,9 @@ class HealthDataReader(
             )
             var totalDistance = 0.0
             for (distanceRec in distanceRequest.records) {
-                totalDistance += distanceRec.distance.inMeters *
-                    overlapFraction(distanceRec.startTime, distanceRec.endTime, record.startTime, record.endTime)
+                if (belongsToWindow(distanceRec.startTime, distanceRec.endTime, record.startTime, record.endTime)) {
+                    totalDistance += distanceRec.distance.inMeters
+                }
             }
 
             // Get energy burned data
@@ -636,8 +637,9 @@ class HealthDataReader(
             )
             var totalEnergyBurned = 0.0
             for (energyBurnedRec in energyBurnedRequest.records) {
-                totalEnergyBurned += energyBurnedRec.energy.inKilocalories *
-                    overlapFraction(energyBurnedRec.startTime, energyBurnedRec.endTime, record.startTime, record.endTime)
+                if (belongsToWindow(energyBurnedRec.startTime, energyBurnedRec.endTime, record.startTime, record.endTime)) {
+                    totalEnergyBurned += energyBurnedRec.energy.inKilocalories
+                }
             }
 
             // Get steps data
@@ -653,8 +655,9 @@ class HealthDataReader(
             )
             var totalSteps = 0.0
             for (stepRec in stepRequest.records) {
-                totalSteps += stepRec.count *
-                    overlapFraction(stepRec.startTime, stepRec.endTime, record.startTime, record.endTime)
+                if (belongsToWindow(stepRec.startTime, stepRec.endTime, record.startTime, record.endTime)) {
+                    totalSteps += stepRec.count
+                }
             }
 
             // Add final datapoint
@@ -744,25 +747,25 @@ class HealthDataReader(
         private const val WORKOUT = "WORKOUT"
 
         /**
-         * Share of the record's interval that falls inside the window.
-         * Health Connect returns every interval record overlapping the
-         * window, so a record that only touches the workout must count for
-         * its overlapping part, not its whole value.
+         * Whether a record belongs to the workout in the window. Health Connect
+         * returns every interval record overlapping the window, including the
+         * records of a neighbouring workout that only touches it, so a record
+         * counts only when most of it lies inside the window.
          */
-        internal fun overlapFraction(
+        internal fun belongsToWindow(
             recordStart: Instant,
             recordEnd: Instant,
             windowStart: Instant,
             windowEnd: Instant,
-        ): Double {
+        ): Boolean {
             val recordMillis = Duration.between(recordStart, recordEnd).toMillis()
             if (recordMillis <= 0) {
-                return if (recordStart < windowStart || recordStart > windowEnd) 0.0 else 1.0
+                return recordStart >= windowStart && recordStart <= windowEnd
             }
             val overlapStart = maxOf(recordStart, windowStart)
             val overlapEnd = minOf(recordEnd, windowEnd)
             val overlapMillis = Duration.between(overlapStart, overlapEnd).toMillis()
-            return (overlapMillis.toDouble() / recordMillis).coerceIn(0.0, 1.0)
+            return overlapMillis * 2 > recordMillis
         }
     }
 }
