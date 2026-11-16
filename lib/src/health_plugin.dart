@@ -1596,7 +1596,8 @@ class Health {
 
   /// Write workout data to Apple Health or Google Health Connect.
   ///
-  /// Returns true if the workout data was successfully added.
+  /// Returns true if the workout data was successfully added. On Android, throws a
+  /// [PlatformException] carrying the Health Connect error when the insert fails.
   ///
   /// Parameters:
   ///  - [activityType] The type of activity performed.
