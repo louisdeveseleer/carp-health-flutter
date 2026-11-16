@@ -361,7 +361,7 @@ class HealthDataWriter(
                 )
                 Log.w("FLUTTER_HEALTH::ERROR", e.message ?: "unknown error")
                 Log.w("FLUTTER_HEALTH::ERROR", e.stackTrace.toString())
-                result.success(false)
+                result.error("HEALTH_CONNECT_ERROR", "${e.javaClass.name}: ${e.message}", null)
             }
         }
     }
